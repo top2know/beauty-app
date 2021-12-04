@@ -8,8 +8,9 @@ import pandas as pd
 import pyzbar.pyzbar as pyzbar
 import cv2
 
-TEST_START, STEP_1, STEP_2, STEP_3, STEP_4, STEP_5 = range(6)
-ASK_CODE = 0
+TEST_START, STEP_1, STEP_2, STEP_3, STEP_4, STEP_5, STEP_6, STEP_7 = range(8)
+ASK_CODE = 10
+WAIT_FOR_FEEDBACK = 15
 
 
 config = configparser.ConfigParser()
@@ -18,19 +19,47 @@ host_name = config['BOT']['host']
 
 
 def start(update, context):
-    context.bot.send_message(chat_id=update.effective_chat.id, text="""Hello, my fellow user!
 
-Start /test for completing test
-Use /code for scanning or writing code
-Try /compliment for good mood""")
+    reply_keyboard = [
+        'Пройти тест',
+        'Записаться в клинику',
+        'Загрузить штрих-код',
+        'Обратная связь',
+        'Получить комплимент']
+
+    update.message.reply_text("""Привет!
+
+Команды:
+/test - пройти тест
+/code - узнать сочетаемость продукта с вашей кожей по штрих-коду
+/feedback - оставить обратную связь
+/clinic - записаться в клинику для детальной диагностики кожи
+/compliment - для хорошего настроения""",
+                              reply_markup=ReplyKeyboardMarkup(
+                                  [reply_keyboard],
+                                  one_time_keyboard=True
+                              ))
 
 
 def echo(update, context):
-    context.bot.send_message(chat_id=update.effective_chat.id,
-                             text="""Are you lost? 
-Start /test for completing test
-Use /code for scanning or writing code
-Try /compliment for good mood""")
+
+    reply_keyboard = [
+        'Пройти тест',
+        'Записаться в клинику',
+        'Загрузить штрих-код',
+        'Обратная связь',
+        'Получить комплимент']
+
+    update.message.reply_text("""Команды:
+/test - пройти тест
+/code - узнать сочетаемость продукта с вашей кожей по штрих-коду
+/feedback - оставить обратную связь
+/clinic - записаться в клинику для детальной диагностики кожи
+/compliment - для хорошего настроения""",
+                              reply_markup=ReplyKeyboardMarkup(
+                                  [reply_keyboard],
+                                  one_time_keyboard=True
+                              ))
 
 
 def get_compliment(update, context):
@@ -50,7 +79,7 @@ def csv_to_pandas_df(file_link):
 
 def get_step_1(update, context):
     reply_keyboard = ['Нет', 'Да']
-    update.message.reply_text('Голова болит?',
+    update.message.reply_text('Ваша кожа склонна к шелушениям?',
                               reply_markup=ReplyKeyboardMarkup(
                                   [reply_keyboard],
                                   one_time_keyboard=True
@@ -62,7 +91,7 @@ def get_step_2(update, context):
     answer = update.message.text
     context.user_data['step_1'] = 1 if answer == 'Да' else 0
     reply_keyboard = ['Нет', 'Да']
-    update.message.reply_text('А колени болят?',
+    update.message.reply_text('Ваша кожа склонна к воспалениям(анке) и черным точкам?',
                               reply_markup=ReplyKeyboardMarkup(
                                   [reply_keyboard],
                                   one_time_keyboard=True
@@ -74,7 +103,7 @@ def get_step_3(update, context):
     answer = update.message.text
     context.user_data['step_2'] = 1 if answer == 'Да' else 0
     reply_keyboard = ['Нет', 'Да']
-    update.message.reply_text('А туловище болит?',
+    update.message.reply_text('Ваша кожа склонна к жирному блеску?',
                               reply_markup=ReplyKeyboardMarkup(
                                   [reply_keyboard],
                                   one_time_keyboard=True
@@ -86,7 +115,7 @@ def get_step_4(update, context):
     answer = update.message.text
     context.user_data['step_3'] = 1 if answer == 'Да' else 0
     reply_keyboard = ['Нет', 'Да']
-    update.message.reply_text('А бок болит?',
+    update.message.reply_text('У вас бывали какие-либо аллергические реакции на коже?',
                               reply_markup=ReplyKeyboardMarkup(
                                   [reply_keyboard],
                                   one_time_keyboard=True
@@ -98,7 +127,7 @@ def get_step_5(update, context):
     answer = update.message.text
     context.user_data['step_4'] = 1 if answer == 'Да' else 0
     reply_keyboard = ['Нет', 'Да']
-    update.message.reply_text('А нога болит?',
+    update.message.reply_text('Вас беспокоят морщины на лице?',
                               reply_markup=ReplyKeyboardMarkup(
                                   [reply_keyboard],
                                   one_time_keyboard=True
@@ -106,9 +135,34 @@ def get_step_5(update, context):
     return STEP_5
 
 
-def finalize_test(update, context):
+def get_step_6(update, context):
     answer = update.message.text
     context.user_data['step_5'] = 1 if answer == 'Да' else 0
+    reply_keyboard = ['Нет', 'Да']
+    update.message.reply_text('У вас бывали раздражения от холода/ветра/воды?',
+                              reply_markup=ReplyKeyboardMarkup(
+                                  [reply_keyboard],
+                                  one_time_keyboard=True
+                              ))
+    return STEP_6
+
+
+def get_step_7(update, context):
+    answer = update.message.text
+    context.user_data['step_6'] = 1 if answer == 'Да' else 0
+    reply_keyboard = ['Нет', 'Да']
+    update.message.reply_text('Какими средствами для лица обычно пользуетесь? Какая ценовая категория?',
+                              # reply_markup=ReplyKeyboardMarkup(
+                              #    [reply_keyboard],
+                              #    one_time_keyboard=True
+                              )
+    return STEP_7
+
+
+def finalize_test(update, context):
+    answer = update.message.text
+    print('ПОЛУЧЕН ОТВЕТ НА ВОПРОС 7:', answer)
+    context.user_data['step_7'] = 0 #1 if answer == 'Да' else 0
     values = context.user_data
 
     response = requests.get(f'{host_name}/get_illnesses', params=values)
@@ -116,10 +170,13 @@ def finalize_test(update, context):
     response = response.json()
 
     if len(response['illnesses']) == 0:
-        update.message.reply_text(f'Вы здоровы!')
+        update.message.reply_text(f'С вашей кожей все хорошо!')
     else:
-        update.message.reply_text(f'Количество потенциальных болезней: {len(response["illnesses"])}\n'
+        update.message.reply_text(f'Количество потенциальных проблем с кожей: {len(response["illnesses"])}\n'
                                   f'Перечень: ' + ', '.join(response['illnesses']))
+
+        update.message.reply_text("""Рекомендуемые средства:
+""" + '\n'.join([k + ': ' + ','.join(response['advices'][k]) for k in response['advices']]))
 
     return ConversationHandler.END
 
@@ -164,12 +221,27 @@ def get_code_from_image(update, context):
     return ConversationHandler.END
 
 
+def get_clinic(update, context):
+    update.message.reply_text('Мы уже работаем над данной возможностью!')
+    print('ПРОИЗОШЕЛ ЗАПРОС КЛИНИКИ!')
+    return ConversationHandler.END
+
+
+def ask_feedback(update, context):
+    update.message.reply_text('Введите текст в следующем сообщении.')
+    return WAIT_FOR_FEEDBACK
+
+
+def get_feedback(update, context):
+    print('ПОЛУЧЕНА ОБРАТНАЯ СВЯЗЬ:', update.message.text)
+    update.message.reply_text('Спасибо за обратную связь, она помогает нам стать лучше!')
+    return ConversationHandler.END
+
+
 def cancel(update, context):
     update.message.reply_text('Выполнение прервано!')
 
     return ConversationHandler.END
-
-
 
 
 def run():
@@ -177,16 +249,23 @@ def run():
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CommandHandler('start', start))
     dispatcher.add_handler(CommandHandler('compliment', get_compliment))
+    dispatcher.add_handler(MessageHandler(Filters.regex('Получить комплимент'), get_compliment))
+    dispatcher.add_handler(CommandHandler('clinic', get_clinic))
+    dispatcher.add_handler(MessageHandler(Filters.regex('Записаться в клинику'), get_clinic))
     dispatcher.add_handler(CommandHandler('help', echo))
+    dispatcher.add_handler(MessageHandler(Filters.regex('Помощь'), echo))
 
     test_handler = ConversationHandler(
-        entry_points=[CommandHandler('test', get_step_1)],
+        entry_points=[CommandHandler('test', get_step_1),
+                      MessageHandler(Filters.regex('Пройти тест'), get_step_1)],
         states={
             STEP_1: [MessageHandler(Filters.text & ~Filters.command, get_step_2)],
             STEP_2: [MessageHandler(Filters.text & ~Filters.command, get_step_3)],
             STEP_3: [MessageHandler(Filters.text & ~Filters.command, get_step_4)],
             STEP_4: [MessageHandler(Filters.text & ~Filters.command, get_step_5)],
-            STEP_5: [MessageHandler(Filters.text & ~Filters.command, finalize_test)]
+            STEP_5: [MessageHandler(Filters.text & ~Filters.command, get_step_6)],
+            STEP_6: [MessageHandler(Filters.text & ~Filters.command, get_step_7)],
+            STEP_7: [MessageHandler(Filters.text & ~Filters.command, finalize_test)]
         },
         fallbacks=[CommandHandler('cancel', cancel)],
     )
@@ -194,7 +273,8 @@ def run():
     dispatcher.add_handler(test_handler)
 
     code_handler = ConversationHandler(
-        entry_points=[CommandHandler('code', get_code_message)],
+        entry_points=[CommandHandler('code', get_code_message),
+                      MessageHandler(Filters.regex('Загрузить штрих-код'), get_code_message)],
         states={
             ASK_CODE: [MessageHandler(Filters.text & ~Filters.command, get_code_from_text),
                        MessageHandler(Filters.photo & ~Filters.command, get_code_from_image)],
@@ -203,6 +283,17 @@ def run():
     )
 
     dispatcher.add_handler(code_handler)
+
+    feedback_handler = ConversationHandler(
+        entry_points=[CommandHandler('feedback', ask_feedback),
+                      MessageHandler(Filters.regex('Обратная связь'), ask_feedback)],
+        states={
+            WAIT_FOR_FEEDBACK: [MessageHandler(Filters.text & ~Filters.command, get_feedback)],
+        },
+        fallbacks=[CommandHandler('cancel', cancel)],
+    )
+
+    dispatcher.add_handler(feedback_handler)
 
     echo_handler = MessageHandler(Filters.text & (~Filters.command), echo)
     echo_handler2 = MessageHandler(Filters.document & (~Filters.command), echo)
