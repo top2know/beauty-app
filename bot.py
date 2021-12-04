@@ -174,9 +174,13 @@ def finalize_test(update, context):
     else:
         update.message.reply_text(f'Количество потенциальных проблем с кожей: {len(response["illnesses"])}\n'
                                   f'Перечень: ' + ', '.join(response['illnesses']))
-
+        advices = response['advices']
+        if 'Рекомендуемые вещества в составе' in advices:
+            update.message.reply_text('Рекомендуемые вещества в составе: '
+                                      + ','.join(advices['Рекомендуемые вещества в составе']))
+            del advices['Рекомендуемые вещества в составе']
         update.message.reply_text("""Рекомендуемые средства:
-""" + '\n'.join([k + ': ' + ','.join(response['advices'][k]) for k in response['advices']]))
+""" + '\n'.join([k + ': ' + ','.join(response['advices'][k]) for k in advices]))
 
     return ConversationHandler.END
 
