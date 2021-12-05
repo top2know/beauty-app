@@ -1,4 +1,5 @@
 import os
+import logging
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import CommandHandler, MessageHandler, Filters, Updater, ConversationHandler
 import configparser
@@ -7,6 +8,9 @@ import pandas as pd
 
 import pyzbar.pyzbar as pyzbar
 import cv2
+
+logging.basicConfig(filename='output.log',
+                    level=logging.INFO)
 
 TEST_START, STEP_1, STEP_2, STEP_3, STEP_4, STEP_5, STEP_6, STEP_7 = range(8)
 ASK_CODE = 10
@@ -161,6 +165,7 @@ def get_step_7(update, context):
 
 def finalize_test(update, context):
     answer = update.message.text
+    logging.info('ПОЛУЧЕН ОТВЕТ НА ВОПРОС 7: %s', (answer, ))
     print('ПОЛУЧЕН ОТВЕТ НА ВОПРОС 7:', answer)
     context.user_data['step_7'] = 0 #1 if answer == 'Да' else 0
     values = context.user_data
@@ -227,6 +232,7 @@ def get_code_from_image(update, context):
 
 def get_clinic(update, context):
     update.message.reply_text('Мы уже работаем над данной возможностью!')
+    logging.info('ПРОИЗОШЕЛ ЗАПРОС КЛИНИКИ!')
     print('ПРОИЗОШЕЛ ЗАПРОС КЛИНИКИ!')
     return ConversationHandler.END
 
@@ -237,6 +243,7 @@ def ask_feedback(update, context):
 
 
 def get_feedback(update, context):
+    logging.info('ПОЛУЧЕНА ОБРАТНАЯ СВЯЗЬ: %s', (update.message.text, ))
     print('ПОЛУЧЕНА ОБРАТНАЯ СВЯЗЬ:', update.message.text)
     update.message.reply_text('Спасибо за обратную связь, она помогает нам стать лучше!')
     return ConversationHandler.END
