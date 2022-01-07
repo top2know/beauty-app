@@ -1,0 +1,176 @@
+openapi: 3.0
+info:
+  description: This is the swagger file for backend part of beauty app
+  version: 1.0.0
+  title: Beauty App
+consumes:
+  - application/json
+produces:
+  - application/json
+
+paths:
+  /api/get_compliment:
+    get:
+      tags:
+        - Common
+      operationId: get_compliment
+      summary: Returns some compliment
+      description: Returns some compliment
+      parameters:
+        - name: uid
+          in: query
+          type: string
+          required: false
+          description: User id
+      responses:
+        200:
+          description: Some compliment
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: 'You are so beautiful today!'
+
+  /api/get_info/{code}:
+    get:
+      tags:
+        - Common
+      operationId: get_info_for_code
+      summary: Returns info for code
+      description: Returns info for code
+      parameters:
+          - name: code
+            in: path
+            type: number
+            required: true
+            description: Code of product
+      responses:
+        200:
+          description: Product's ingredients
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: 'Две мясных котлеты гриль, специальный соус, сыр'
+        404:
+          description: Code not found
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: 'Штрих-код не обнаружен в базе!'
+  /api/get_illnesses:
+    get:
+      tags:
+        - Personal
+      operationId: illnesses.get
+      summary: Get illnesses based on survey result
+      description: Get illnesses based on survey result
+      parameters:
+        - name: uid
+          in: query
+          type: string
+          required: false
+          description: User id
+      responses:
+        200:
+          description: Lists of illnesses and advices
+          schema:
+            type: object
+            properties:
+              illnesses:
+                type: object
+                example: ["Сухая", "Жирная"]
+              advices:
+                type: object
+                example: {"Пенка" : ["Лучшая", "Вторая лучшая"], "Губка": ["Топ", "Тоже топ"]}
+        404:
+          description: User doesn't exist
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: 'Index qwerty123 not found in table users'
+    put:
+      tags:
+        - Personal
+      operationId: illnesses.put
+      summary: Put survey result and get illnesses
+      description: Put survey result and get illnesses
+      parameters:
+        - name: uid
+          in: query
+          type: string
+          required: false
+          description: User id
+        - name: q1
+          in: query
+        - name: q2
+          in: query
+        - name: q3
+          in: query
+        - name: q4
+          in: query
+        - name: q5
+          in: query
+        - name: q6
+          in: query
+        - name: q7
+          in: query
+      responses:
+        200:
+          description: Lists of illnesses and advices
+          schema:
+            type: object
+            properties:
+              illnesses:
+                type: object
+                example: [ "Сухая", "Жирная" ]
+              advices:
+                type: object
+                example: { "Пенка": [ "Лучшая", "Вторая лучшая" ], "Губка": [ "Топ", "Тоже топ" ] }
+
+  /api/get_clinics:
+    get:
+      tags:
+        - Personal
+      operationId: clinics.get
+      summary: Get clinics based on survey result
+      description: Get clinics based on survey result
+      parameters:
+        - name: uid
+          in: query
+          type: string
+          required: false
+          description: User id
+      responses:
+        200:
+          description: Lists of illnesses and advices
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: 'Клиника успешно обнаружена и способна излечить болезней: 2'
+              clinic_name:
+                type: string
+                example: 'Клиника от всего'
+              clinic_site:
+                type: string
+                example: 'www.site.com'
+              illnesses:
+                type: object
+                example: [ "Сухая", "Жирная"]
+        404:
+          description: User doesn't exist
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: 'Нет информации о пройденном тесте!'
+
