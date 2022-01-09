@@ -7,7 +7,7 @@ tables = {
     'codes': {
         'pk': 'Код',
         'force_str': False,
-        'sep': ',',
+        'sep': '|',
         'path': 'codes.csv',
         'allow_append': False
     },
@@ -58,6 +58,13 @@ tables = {
         'force_str': False,
         'sep': '|',
         'path': 'tg_requests.csv',
+        'allow_append': True
+    },
+    'regular_compliments': {
+        'pk': 'uid',
+        'force_str': True,
+        'sep': ';',
+        'path': 'regular_compliments.csv',
         'allow_append': True
     }
 }

@@ -62,6 +62,7 @@ def get_compliment():
     uid = flask.request.args.get('uid', default='test')
     compliments = dm.get_table('compliments')
     history = dm.get_table('compliments_history')
+    history['uid'] = history['uid'].apply(str)
     history['time_since_now'] = history.iso_eventtime.apply(
         lambda x: (datetime.now() - datetime.fromisoformat(x)).seconds)
     history = history[(history.uid == uid) &
@@ -178,6 +179,24 @@ def get_code_info(code):
         return jsonify(message=res), 200
     except KeyError:
         return jsonify(message='Штрих-код не обнаружен в базе!'), 404
+
+
+@app.route('/api/regular_compliments/set/<int:enable>', methods=['POST'])
+@requests_logger
+def update_regular_compliments(enable):
+    if enable not in (1, 0):
+        return jsonify(message=f'Option {enable} is unknown, use 0 or 1'), 400
+    uid = flask.request.args.get('uid', default='test')
+    dm.update_or_add_record('regular_compliments', uid, [enable])
+    return jsonify(message='OK'), 200
+
+
+@app.route('/api/regular_compliments/get_list')
+@requests_logger
+def get_regular_users():
+    users = dm.get_table('regular_compliments')
+    users = list(users[users.status == 1].index.values)
+    return jsonify(message='OK', users=users), 200
 
 
 if __name__ == '__main__':

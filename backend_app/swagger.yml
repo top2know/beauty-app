@@ -173,4 +173,57 @@ paths:
               message:
                 type: string
                 example: 'Нет информации о пройденном тесте!'
-
+  /api/regular_compliments/set/{enable}:
+    post:
+      tags:
+        - Personal
+      operationId: regular_compliments.set
+      summary: Updates status of regular compliments feature
+      description: Updates status of regular compliments feature
+      parameters:
+        - name: uid
+          in: query
+          type: string
+          required: false
+          description: User id
+        - name: enable
+          in: path
+          type: number
+          required: true
+          description: Status of feature
+      responses:
+        200:
+          description: Success
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: 'OK'
+        400:
+          description: Bad value for enable
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: 'Option 2 is unknown, use 0 or 1'
+  /api/regular_compliments/get_list:
+    get:
+      tags:
+        - Common
+      operationId: regular_compliments.get_list
+      summary: Returns list of subscribed to compliments users
+      description: Returns list of subscribed to compliments users
+      responses:
+        200:
+          description: List of users
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: 'OK'
+              users:
+                type: object
+                example: ['123', '456']

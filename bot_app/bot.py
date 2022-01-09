@@ -2,6 +2,7 @@ import functools
 import os
 import logging
 import time
+import schedule
 
 from telegram import ReplyKeyboardMarkup
 from telegram.ext import CommandHandler, MessageHandler, Filters, Updater, ConversationHandler
@@ -22,6 +23,35 @@ WAIT_FOR_FEEDBACK = 15
 config = configparser.ConfigParser()
 config.read("config")
 host_name = config['BOT']['host']
+
+
+def send_regular_compliments(updater):
+    users = requests.get(f'{host_name}/api/regular_compliments/get_list').json()['users']
+    for user in users:
+        start_time = time.time()
+        response = requests.get(f'{host_name}/api/get_compliment', params={
+            'uid': user
+        })
+        try:
+            message = updater.bot.send_message(chat_id=user,
+                                               text=response.json()['message'])
+            requests.post(f'{host_name}/api/log_front_request', json={
+                'uid': user,
+                'input': '',
+                'username': message['chat']['username'],
+                'time_spent': round(time.time() - start_time, 6),
+                'func_name': 'send_regular_compliments',
+                'message': 'daily operation for compliment: ' + message['text']
+            })
+        except Exception as e:
+            requests.post(f'{host_name}/api/log_front_request', json={
+                'uid': user,
+                'input': '',
+                'username': 'failed',
+                'time_spent': round(time.time() - start_time, 6),
+                'func_name': 'send_regular_compliments',
+                'message': str(e)
+            })
 
 
 def action_logger(f):
@@ -285,8 +315,8 @@ def get_code_from_image(update, context):
         decoded_objects = pyzbar.decode(img)
         # Print results
         # for obj in decoded_objects:
-            # print('Type : ', obj.type)
-            # print('Data : ', obj.data, '\n')
+        # print('Type : ', obj.type)
+        # print('Data : ', obj.data, '\n')
         return decoded_objects
 
     im = cv2.imread('file.jpg')
@@ -298,7 +328,7 @@ def get_code_from_image(update, context):
         message = update.message.reply_text('Несколько штрих-кодов!')
     else:
         message = update.message.reply_text(requests.get(
-                f'{host_name}/api/get_info/{decodedObjects[0].data.decode("UTF-8")}').json()['message'])
+            f'{host_name}/api/get_info/{decodedObjects[0].data.decode("UTF-8")}').json()['message'])
 
     return ConversationHandler.END, message.text
 
@@ -319,7 +349,7 @@ def get_clinic(update, context):
         if response.get('clinic_name') is None:
             message = update.message.reply_text(response['message'])
         else:
-            message = update.message.\
+            message = update.message. \
                 reply_text(f"Лучшая клиника: {response['clinic_name']}\n"
                            f"Сайт: {response['clinic_site']}\n\n"
                            f"Работают со следующими проблемами с кожей: {', '.join(response['illnesses'])})")
@@ -339,6 +369,32 @@ def get_feedback(update, context):
 
 
 @action_logger
+def enable_regular_compliments(update, context):
+    response = requests.post(f'{host_name}/api/regular_compliments/set/1',
+                             params={
+                                 'uid': update.effective_user.id
+                             })
+    if response.status_code != 200:
+        message = update.message.reply_text('Что-то пошло не так!')
+    else:
+        message = update.message.reply_text('Ежедневные комплименты успешно включены!')
+    return ConversationHandler.END, message.text
+
+
+@action_logger
+def disable_regular_compliments(update, context):
+    response = requests.post(f'{host_name}/api/regular_compliments/set/0',
+                             params={
+                                 'uid': update.effective_user.id
+                             })
+    if response.status_code != 200:
+        message = update.message.reply_text('Что-то пошло не так!')
+    else:
+        message = update.message.reply_text('Ежедневные комплименты успешно выключены!')
+    return ConversationHandler.END, message.text
+
+
+@action_logger
 def cancel(update, context):
     message = update.message.reply_text('Выполнение прервано!')
     return ConversationHandler.END, message.text
@@ -353,6 +409,8 @@ def run():
     dispatcher.add_handler(CommandHandler('clinic', get_clinic))
     dispatcher.add_handler(MessageHandler(Filters.regex('Записаться в клинику'), get_clinic))
     dispatcher.add_handler(CommandHandler('help', echo))
+    dispatcher.add_handler(CommandHandler('enable_regular_compliments', enable_regular_compliments))
+    dispatcher.add_handler(CommandHandler('disable_regular_compliments', disable_regular_compliments))
     dispatcher.add_handler(MessageHandler(Filters.regex('Помощь'), echo))
 
     test_handler = ConversationHandler(
@@ -402,6 +460,14 @@ def run():
     dispatcher.add_handler(echo_handler2)
 
     updater.start_polling()
+    schedule.every().day.at(config['BOT']['compliments_time']).do(send_regular_compliments, updater)
+    # schedule.every(10).seconds.do(send_regular_compliments, updater)
+    while True:
+        try:
+            schedule.run_pending()
+        except:
+            pass
+        time.sleep(1)
 
 
 if __name__ == '__main__':
